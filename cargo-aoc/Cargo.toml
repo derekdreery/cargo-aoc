@@ -1,0 +1,17 @@
+[package]
+name = "cargo-aoc"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.51"
+cargo = "0.58.0"
+qu = "0.3.1"
+quote = "1.0.10"
+reqwest = { version = "0.11.7", features = ["blocking"] }
+scraper = "0.12.0"
+serde = "1.0.130"
+structopt = "0.3.25"
+toml = "0.5.8"

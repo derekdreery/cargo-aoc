@@ -1,0 +1,6 @@
+[workspace]
+
+members = ["cargo-aoc"]
+
+[profile.dev]
+opt-level = 3
