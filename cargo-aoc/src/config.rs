@@ -7,10 +7,13 @@ use cargo::{
 use qu::ick_use::*;
 use serde::{Deserialize, Serialize};
 use std::{
+    collections::{BTreeMap, BTreeSet},
     env, fs,
-    io::{self, prelude::*},
+    io::prelude::*,
     path::{Path, PathBuf},
 };
+
+use crate::IoResultExt;
 
 const PROJECT_NAME: &str = "aoc";
 const CONFIG_PATH: &str = ".aoc.toml";
@@ -58,14 +61,32 @@ impl Config {
     }
 
     pub fn load() -> Result<Self> {
-        let project_root = find_project_dir()?;
+        let project_root =
+            find_project_dir().context("cannot load project at the current location")?;
         let config_path = project_root.join(CONFIG_PATH);
-        let file = AocConfig::load(&config_path)?;
+        let file =
+            AocConfig::load(&config_path).context("cannot load project at the current location")?;
         Ok(Config {
             project_root,
             config_path,
             file,
         })
+    }
+
+    /// The folder for the source files for year given.
+    pub fn year_folder(&self, year: u16) -> PathBuf {
+        self.project_root.join(format!("src/_{}", year))
+    }
+
+    /// The source file for the given year and day
+    pub fn day_source(&self, year: u16, day: u8) -> PathBuf {
+        self.project_root
+            .join(format!("src/_{}/day{}.rs", year, day))
+    }
+
+    pub fn input_path(&self, year: u16, day: u8) -> PathBuf {
+        self.project_root
+            .join(format!("input/{}/input{}.txt", year, day))
     }
 
     pub fn save(self) -> Result {
@@ -83,6 +104,8 @@ impl Drop for Config {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AocConfig {
     pub cookie: Option<String>,
+    /// Keeps track of the years we have downloaded for.
+    pub years: BTreeMap<u16, BTreeSet<u8>>,
 }
 
 impl AocConfig {
@@ -119,20 +142,9 @@ impl AocConfig {
 
 impl Default for AocConfig {
     fn default() -> Self {
-        Self { cookie: None }
-    }
-}
-
-trait IoResultExt<T> {
-    fn optional(self) -> io::Result<Option<T>>;
-}
-
-impl<T> IoResultExt<T> for io::Result<T> {
-    fn optional(self) -> io::Result<Option<T>> {
-        match self {
-            Ok(v) => Ok(Some(v)),
-            Err(e) if matches!(e.kind(), io::ErrorKind::NotFound) => Ok(None),
-            Err(e) => Err(e),
+        Self {
+            cookie: None,
+            years: BTreeMap::new(),
         }
     }
 }

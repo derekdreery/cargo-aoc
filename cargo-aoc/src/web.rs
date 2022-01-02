@@ -1,9 +1,21 @@
 use qu::ick_use::*;
-use scraper::Html;
+use reqwest::blocking::Client;
 
-pub fn get_year(year: u16) -> Result<Vec<u8>> {
-    let body = reqwest::blocking::get(format!("https://adventofcode.com/{}", year))?.text()?;
-    let html = Html::parse_document(&body);
-    println!("{:?}", html);
-    todo!()
+thread_local! {
+    pub static CLIENT: Client = Client::new();
 }
+
+pub fn get_day(cookie: &str, year: u16, day: u8) -> Result<String> {
+    let url = format!("https://adventofcode.com/{}/day/{}/input", year, day);
+    log::info!("fetching {}", url);
+
+    let res = CLIENT
+        .with(|client| client.get(url))
+        .header("Cookie", format!("session={}", cookie))
+        .send()?;
+    let res = res.error_for_status()?;
+    let res = res.text()?;
+    Ok(res)
+}
+
+//Cookie: session=.....
